@@ -1,0 +1,63 @@
+// @lovable.dev/vite-tanstack-config already includes the following — do NOT add them manually
+// or the app will break with duplicate plugins:
+//   - TanStack devtools (dev-only, first), tanstackStart, viteReact, tailwindcss, tsConfigPaths,
+//     nitro (build-only using cloudflare as a default target), VITE_* env injection, @ path alias,
+//     React/TanStack dedupe, error logger plugins, and sandbox detection (port/host/strictPort).
+// You can pass additional config via defineConfig({ vite: { ... }, etc... }) if needed.
+import { defineConfig } from "@lovable.dev/vite-tanstack-config";
+import { loadEnv, type PluginOption } from "vite";
+import { normalizeViteEnvAccess, resolvePublicConnectionEnv } from "./src/lib/vite-env-access";
+import publicConnection from "./src/lib/public-connection.json";
+
+let browserPublicEnv: Record<string, string> = {};
+const browserConnectionEnv: PluginOption = {
+  name: "browser-connection-env",
+  enforce: "pre",
+  configResolved(config) {
+    const loaded = loadEnv(config.mode, config.envDir, "VITE_");
+    browserPublicEnv = resolvePublicConnectionEnv(publicConnection, loaded, config.env);
+  },
+  transform(source, id) {
+    if (!id.split("?")[0]?.endsWith("/integrations/supabase/client.ts")) return null;
+    const code = normalizeViteEnvAccess(source, browserPublicEnv);
+    return code === source ? null : { code, map: null };
+  },
+};
+
+const assetOrigin =
+  process.env["VITE_ASSET_ORIGIN"]?.trim().replace(/\/$/, "") ||
+  "https://project--92032d2e-ff07-40e9-82dd-e2202315f52f.lovable.app";
+
+const productionAssetUrls: PluginOption = {
+  name: "production-asset-urls",
+  apply: "build",
+  enforce: "pre",
+  transform(source, id) {
+    if (!id.endsWith(".asset.json")) return null;
+
+    const asset = JSON.parse(source) as { url?: string };
+    if (!asset.url?.startsWith("/__l5e/assets-v1/")) return null;
+
+    return {
+      code: JSON.stringify({ ...asset, url: `${assetOrigin}${asset.url}` }),
+      map: null,
+    };
+  },
+};
+
+export default defineConfig({
+  vite: {
+    plugins: [browserConnectionEnv, productionAssetUrls],
+  },
+  tanstackStart: {
+    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
+    // nitro/vite builds from this
+    server: { entry: "server" },
+  },
+  nitro: {
+    // Target the Vercel Build Output API so `vite build` emits .vercel/output
+    // that Vercel can deploy (the Lovable sandbox ignores this and keeps
+    // building for Cloudflare).
+    preset: "vercel",
+  },
+});
