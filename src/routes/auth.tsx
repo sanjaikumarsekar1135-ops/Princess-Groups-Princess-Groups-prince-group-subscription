@@ -147,15 +147,8 @@ function AuthPage() {
   }
 
   async function google() {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: window.location.origin + "/dashboard",
-      },
-    });
-    if (error) {
-      toast.error("Google sign-in failed. Please try again.");
-    }
+    const targetUrl = `https://lfsmmttjtusngtlbznzi.supabase.co/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + "/dashboard")}`;
+    window.location.href = targetUrl;
   }
 
   return (
