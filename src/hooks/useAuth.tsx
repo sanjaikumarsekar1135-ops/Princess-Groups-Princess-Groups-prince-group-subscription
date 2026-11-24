@@ -43,10 +43,18 @@ export function useRoles(userId?: string) {
     queryKey: ["roles", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId!);
-      if (error) throw error;
-      return (data ?? []).map((r) => r.role as AppRole);
+      try {
+        const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId!);
+        if (error) {
+          console.warn("Could not fetch user_roles:", error.message);
+          return ["customer" as AppRole];
+        }
+        return (data ?? []).map((r) => r.role as AppRole);
+      } catch {
+        return ["customer" as AppRole];
+      }
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 
@@ -55,10 +63,18 @@ export function useProfile(userId?: string) {
     queryKey: ["profile", userId],
     enabled: !!userId,
     queryFn: async () => {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
-      if (error) throw error;
-      return data;
+      try {
+        const { data, error } = await supabase.from("profiles").select("*").eq("id", userId!).maybeSingle();
+        if (error) {
+          console.warn("Could not fetch profile:", error.message);
+          return null;
+        }
+        return data;
+      } catch {
+        return null;
+      }
     },
+    staleTime: 5 * 60 * 1000,
   });
 }
 

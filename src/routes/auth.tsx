@@ -147,8 +147,28 @@ function AuthPage() {
   }
 
   async function google() {
-    const targetUrl = `https://lfsmmttjtusngtlbznzi.supabase.co/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + "/dashboard")}`;
-    window.location.href = targetUrl;
+    try {
+      setBusy(true);
+      const redirectTo = `${window.location.origin}/auth/callback`;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo,
+          queryParams: {
+            access_type: "offline",
+            prompt: "select_account",
+          },
+        },
+      });
+      if (error) {
+        toast.error(`Google Sign-In error: ${error.message}`);
+        setBusy(false);
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Unable to initiate Google sign-in";
+      toast.error(msg);
+      setBusy(false);
+    }
   }
 
   return (

@@ -1,11 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { Menu, Phone, Sparkles } from "lucide-react";
+import { LogOut, Menu, Phone, Sparkles, UserCheck } from "lucide-react";
 import { useState } from "react";
 
 import princeLogo from "@/assets/prince-logo.png.asset.json";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useSession } from "@/hooks/useAuth";
+import { useProfile, useSession } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { phoneDisplay } from "@/lib/format";
 import { settingString, useSettings } from "@/hooks/usePlatform";
 
@@ -85,9 +86,12 @@ function GlassNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export function SiteHeader() {
   const { user } = useSession();
+  const { data: profile } = useProfile(user?.id);
   const { data: settings } = useSettings();
   const phone = settingString(settings, "support_phone", "9559155535");
   const [open, setOpen] = useState(false);
+
+  const displayName = profile?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Member";
 
 
   return (
@@ -119,9 +123,31 @@ export function SiteHeader() {
               </a>
 
               {user ? (
-                <Button asChild size="sm" variant="lime">
-                  <Link to="/dashboard">Dashboard</Link>
-                </Button>
+                <div className="flex items-center gap-2">
+                  <div className="hidden flex-col items-end sm:flex leading-tight">
+                    <span className="flex items-center gap-1 text-xs font-semibold text-primary">
+                      <UserCheck className="size-3.5 text-secondary" /> {displayName}
+                    </span>
+                    <span className="max-w-[140px] truncate text-[10px] text-foreground/70" title={user.email ?? ""}>
+                      {user.email}
+                    </span>
+                  </div>
+                  <Button asChild size="sm" variant="lime">
+                    <Link to="/dashboard">Dashboard</Link>
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={async () => {
+                      await supabase.auth.signOut();
+                      window.location.href = "/";
+                    }}
+                    title="Sign Out"
+                    className="hidden sm:inline-flex px-2 text-foreground/70 hover:text-destructive"
+                  >
+                    <LogOut className="size-4" />
+                  </Button>
+                </div>
               ) : (
                 <>
                   <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
@@ -160,13 +186,42 @@ export function SiteHeader() {
                       >
                         Bank Executive Portal
                       </Link>
-                      <Link
-                        to="/auth"
-                        onClick={() => setOpen(false)}
-                        className="rounded-2xl px-4 py-3 text-sm font-semibold text-cream/95 transition-colors hover:bg-cream/10 hover:text-accent"
-                      >
-                        Login / Register
-                      </Link>
+                      {user ? (
+                        <div className="flex flex-col gap-2 rounded-2xl bg-cream/10 p-3">
+                          <div className="flex items-center gap-2 text-xs font-semibold text-cream">
+                            <UserCheck className="size-4 text-accent" /> {displayName}
+                          </div>
+                          <span className="truncate text-xs text-cream/70">{user.email}</span>
+                          <div className="flex gap-2 pt-1">
+                            <Link
+                              to="/dashboard"
+                              onClick={() => setOpen(false)}
+                              className="flex-1 rounded-xl bg-accent px-3 py-1.5 text-center text-xs font-bold text-primary"
+                            >
+                              Dashboard
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                setOpen(false);
+                                await supabase.auth.signOut();
+                                window.location.href = "/";
+                              }}
+                              className="rounded-xl bg-cream/20 px-3 py-1.5 text-xs text-cream hover:bg-destructive/40"
+                            >
+                              Sign Out
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <Link
+                          to="/auth"
+                          onClick={() => setOpen(false)}
+                          className="rounded-2xl px-4 py-3 text-sm font-semibold text-cream/95 transition-colors hover:bg-cream/10 hover:text-accent"
+                        >
+                          Login / Register
+                        </Link>
+                      )}
                     </div>
                     <Button asChild variant="lime" className="mt-6 w-full">
                       <a href={`tel:${phone}`}>
