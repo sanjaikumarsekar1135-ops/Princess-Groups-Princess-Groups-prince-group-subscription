@@ -31,6 +31,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedLeadsRouteImport } from './routes/_authenticated/leads'
 import { Route as AuthenticatedNetworkAdminRouteImport } from './routes/_authenticated/network-admin'
 import { Route as AuthenticatedSubscriptionRouteImport } from './routes/_authenticated/subscription'
+import { Route as AuthCallbackRouteImport } from './routes/auth_.callback'
 import { Route as EnquiryMessagesRouteImport } from './routes/enquiry_.messages'
 import { Route as EnquiryProfileRouteImport } from './routes/enquiry_.profile'
 import { Route as ApiPublicRazorpayWebhookRouteImport } from './routes/api/public/razorpay-webhook'
@@ -147,6 +148,11 @@ const AuthenticatedSubscriptionRoute =
     path: '/subscription',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth_/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EnquiryMessagesRoute = EnquiryMessagesRouteImport.update({
   id: '/enquiry_/messages',
   path: '/enquiry/messages',
@@ -191,6 +197,7 @@ export interface FileRoutesByFullPath {
   '/leads': typeof AuthenticatedLeadsRoute
   '/network-admin': typeof AuthenticatedNetworkAdminRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/enquiry/messages': typeof EnquiryMessagesRoute
   '/enquiry/profile': typeof EnquiryProfileRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
@@ -218,6 +225,7 @@ export interface FileRoutesByTo {
   '/leads': typeof AuthenticatedLeadsRoute
   '/network-admin': typeof AuthenticatedNetworkAdminRoute
   '/subscription': typeof AuthenticatedSubscriptionRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/enquiry/messages': typeof EnquiryMessagesRoute
   '/enquiry/profile': typeof EnquiryProfileRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
@@ -247,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/leads': typeof AuthenticatedLeadsRoute
   '/_authenticated/network-admin': typeof AuthenticatedNetworkAdminRoute
   '/_authenticated/subscription': typeof AuthenticatedSubscriptionRoute
+  '/auth_/callback': typeof AuthCallbackRoute
   '/enquiry_/messages': typeof EnquiryMessagesRoute
   '/enquiry_/profile': typeof EnquiryProfileRoute
   '/api/public/razorpay-webhook': typeof ApiPublicRazorpayWebhookRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/network-admin'
     | '/subscription'
+    | '/auth/callback'
     | '/enquiry/messages'
     | '/enquiry/profile'
     | '/api/public/razorpay-webhook'
@@ -303,6 +313,7 @@ export interface FileRouteTypes {
     | '/leads'
     | '/network-admin'
     | '/subscription'
+    | '/auth/callback'
     | '/enquiry/messages'
     | '/enquiry/profile'
     | '/api/public/razorpay-webhook'
@@ -331,6 +342,7 @@ export interface FileRouteTypes {
     | '/_authenticated/leads'
     | '/_authenticated/network-admin'
     | '/_authenticated/subscription'
+    | '/auth_/callback'
     | '/enquiry_/messages'
     | '/enquiry_/profile'
     | '/api/public/razorpay-webhook'
@@ -355,6 +367,7 @@ export interface RootRouteChildren {
   RefundRoute: typeof RefundRoute
   ServicesRoute: typeof ServicesRoute
   TermsRoute: typeof TermsRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   EnquiryMessagesRoute: typeof EnquiryMessagesRoute
   EnquiryProfileRoute: typeof EnquiryProfileRoute
   ApiPublicRazorpayWebhookRoute: typeof ApiPublicRazorpayWebhookRoute
@@ -517,6 +530,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSubscriptionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/auth_/callback': {
+      id: '/auth_/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/enquiry_/messages': {
       id: '/enquiry_/messages'
       path: '/enquiry/messages'
@@ -585,6 +605,7 @@ const rootRouteChildren: RootRouteChildren = {
   RefundRoute: RefundRoute,
   ServicesRoute: ServicesRoute,
   TermsRoute: TermsRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   EnquiryMessagesRoute: EnquiryMessagesRoute,
   EnquiryProfileRoute: EnquiryProfileRoute,
   ApiPublicRazorpayWebhookRoute: ApiPublicRazorpayWebhookRoute,

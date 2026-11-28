@@ -91,8 +91,10 @@ export function SiteHeader() {
   const phone = settingString(settings, "support_phone", "9559155535");
   const [open, setOpen] = useState(false);
 
-  const displayName = profile?.name || user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email?.split("@")[0] || "Member";
-
+  const displayName =
+    [profile?.name, user?.user_metadata["full_name"], user?.user_metadata["name"], user?.email?.split("@")[0]].find(
+      (name): name is string => typeof name === "string" && name.trim().length > 0,
+    ) ?? "Member";
 
   return (
     <header className="sticky top-0 z-50">

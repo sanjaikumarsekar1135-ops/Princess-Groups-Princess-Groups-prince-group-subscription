@@ -43,17 +43,22 @@ function AuthPage() {
     if (!loading && user) navigate({ to: "/dashboard", replace: true });
   }, [loading, user, navigate]);
 
+  useEffect(() => {
+    function resetBusyOnRestore(event: PageTransitionEvent) {
+      if (event.persisted) setBusy(false);
+    }
+
+    window.addEventListener("pageshow", resetBusyOnRestore);
+    return () => window.removeEventListener("pageshow", resetBusyOnRestore);
+  }, []);
+
   const signInSchema = z.object({
     email: z.string().trim().email({ message: "Please enter a valid email address." }).max(255),
     password: z.string().min(6, { message: "Password must be at least 6 characters." }).max(72),
   });
 
   const signUpSchema = signInSchema.extend({
-    fullName: z
-      .string()
-      .trim()
-      .min(2, { message: "Please enter your full name." })
-      .max(100),
+    fullName: z.string().trim().min(2, { message: "Please enter your full name." }).max(100),
     phone: z
       .string()
       .trim()
@@ -147,26 +152,21 @@ function AuthPage() {
   }
 
   async function google() {
+    setBusy(true);
     try {
-      setBusy(true);
-      const redirectTo = `${window.location.origin}/auth/callback`;
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo,
-          queryParams: {
-            access_type: "offline",
-            prompt: "select_account",
-          },
+          redirectTo: new URL("/auth/callback", window.location.origin).href,
+          queryParams: { prompt: "select_account" },
+          skipBrowserRedirect: true,
         },
       });
-      if (error) {
-        toast.error(`Google Sign-In error: ${error.message}`);
-        setBusy(false);
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Unable to initiate Google sign-in";
-      toast.error(msg);
+      if (error || !data.url) throw error ?? new Error("Missing Google sign-in URL");
+
+      window.location.assign(data.url);
+    } catch {
+      toast.error("Could not start Google sign-in. Please try again or sign in with email.");
       setBusy(false);
     }
   }
@@ -220,7 +220,13 @@ function AuthPage() {
             {tab === "signin" ? (
               <form onSubmit={signIn} className="mt-6 space-y-4">
                 <Field id="email" label="Email" type="email" value={email} onChange={setEmail} />
-                <Field id="password" label="Password" type="password" value={password} onChange={setPassword} />
+                <Field
+                  id="password"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                />
                 <Button type="submit" variant="hero" className="w-full" disabled={busy}>
                   Sign In
                 </Button>
@@ -230,7 +236,13 @@ function AuthPage() {
                 <Field id="name" label="Full name" value={fullName} onChange={setFullName} />
                 <Field id="phone" label="Phone" value={phone} onChange={setPhone} />
                 <Field id="email2" label="Email" type="email" value={email} onChange={setEmail} />
-                <Field id="password2" label="Password" type="password" value={password} onChange={setPassword} />
+                <Field
+                  id="password2"
+                  label="Password"
+                  type="password"
+                  value={password}
+                  onChange={setPassword}
+                />
                 <Button type="submit" variant="hero" className="w-full" disabled={busy}>
                   Create Account
                 </Button>
@@ -238,9 +250,16 @@ function AuthPage() {
             )}
 
             <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-widest text-foreground/80">
-              <span className="h-px flex-1 bg-border" /> or <span className="h-px flex-1 bg-border" />
+              <span className="h-px flex-1 bg-border" /> or{" "}
+              <span className="h-px flex-1 bg-border" />
             </div>
-            <Button variant="outline" className="w-full" onClick={google}>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={google}
+              disabled={busy}
+            >
               Continue with Google
             </Button>
 
@@ -270,7 +289,13 @@ function Field({
   return (
     <div className="space-y-1.5">
       <Label htmlFor={id}>{label}</Label>
-      <Input id={id} type={type} value={value} required onChange={(e) => onChange(e.target.value)} />
+      <Input
+        id={id}
+        type={type}
+        value={value}
+        required
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 }

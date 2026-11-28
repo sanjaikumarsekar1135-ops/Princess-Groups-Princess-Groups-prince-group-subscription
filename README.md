@@ -1910,3 +1910,15 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+### Google sign-in deployment
+
+In the Supabase project used by `VITE_SUPABASE_URL`, set **Authentication → URL Configuration → Site URL** to the primary production origin. Add the exact `/auth/callback` URL for each origin where users can sign in:
+
+- Vercel: `https://princess-groups-princess-groups-pri.vercel.app/auth/callback`
+- Lovable: `https://prince-group-subscription.lovable.app/auth/callback`
+- Local development: use `/auth/callback` on the host and port printed by `npm run dev`.
+
+The redirect URI for the Google Cloud OAuth client is the callback URL shown in the Supabase Google provider settings. For the checked-in connection, it is `https://lfsmmttjtusngtlbznzi.supabase.co/auth/v1/callback`. Store the Google client secret in the Supabase provider settings.
+
+After deployment, open `/auth/callback` on each configured origin to verify the route loads, then use **Continue with Google** on `/auth` and confirm that sign-in opens `/dashboard` on the same origin.
